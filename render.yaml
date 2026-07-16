@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: aegis-medical-app
+    env: python
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: |
+      cd frontend && npm install && npm run build && cd ../backend && pip install -r requirements.txt
+    startCommand: |
+      cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.10.11
