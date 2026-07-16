@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual Environment
+backend/venv/
+venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite3
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Node
+frontend/node_modules/
+node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+
+# Static uploads (user data)
+backend/static/uploads/
+backend/static/annotated/
+backend/static/reports/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ML models (large files)
+*.pkl
+*.pt
+*.pth
+*.h5
+*.onnx

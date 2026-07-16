@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/static:/app/static
+      - ./backend/medical_assistant.db:/app/medical_assistant.db
+    environment:
+      - JWT_SECRET=super-secret-key-for-medical-assistant-12345
+      - ENV=development
+    restart: always
+
+  frontend:
+    image: node:22-slim
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+    restart: always

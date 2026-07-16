@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aegis Medical Diagnostic Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #64748b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* ---- AUTH ---- */
+  .auth-wrap { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px;
+    background: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(99,102,241,0.15) 0%, transparent 60%), var(--bg); }
+  .auth-card { background:var(--surface); border:1px solid var(--border); border-radius:20px;
+    padding:40px; width:100%; max-width:420px; box-shadow:0 25px 50px rgba(0,0,0,0.5); }
+  .auth-logo { text-align:center; margin-bottom:28px; }
+  .auth-logo .icon { width:56px; height:56px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 12px; }
+  .auth-logo h1 { font-size:22px; font-weight:700; }
+  .auth-logo p { color:var(--muted); font-size:13px; margin-top:4px; }
+  .tab-row { display:flex; background:var(--bg); border-radius:10px; padding:4px; margin-bottom:24px; gap:4px; }
+  .tab-btn { flex:1; padding:9px; border:none; background:transparent; color:var(--muted); border-radius:8px;
+    cursor:pointer; font-size:13px; font-weight:500; transition:.2s; }
+  .tab-btn.active { background:var(--surface2); color:var(--text); }
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:500; }
+  .form-group input { width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-size:14px; outline:none; transition:.2s; font-family:inherit; }
+  .form-group input:focus { border-color:var(--accent); }
+  .btn { width:100%; padding:12px; border:none; border-radius:10px; font-size:14px; font-weight:600;
+    cursor:pointer; transition:.2s; font-family:inherit; }
+  .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+  .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+  .demo-hint { margin-top:16px; padding:12px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2);
+    border-radius:10px; font-size:12px; color:var(--muted); text-align:center; }
+  .demo-hint strong { color:var(--accent); }
+
+  /* ---- APP SHELL ---- */
+  .app { display:none; min-height:100vh; }
+  .sidebar { position:fixed; top:0; left:0; width:240px; height:100vh; background:var(--surface);
+    border-right:1px solid var(--border); padding:24px 16px; display:flex; flex-direction:column; z-index:100; }
+  .sidebar-logo { display:flex; align-items:center; gap:10px; padding:0 8px 24px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+  .sidebar-logo .icon { width:36px; height:36px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .sidebar-logo span { font-weight:700; font-size:15px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+    cursor:pointer; color:var(--muted); font-size:13px; font-weight:500; transition:.2s; margin-bottom:2px; }
+  .nav-item:hover { background:var(--surface2); color:var(--text); }
+  .nav-item.active { background:rgba(59,130,246,0.15); color:var(--accent); }
+  .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+  .sidebar-footer { margin-top:auto; padding-top:16px; border-top:1px solid var(--border); }
+  .user-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; }
+  .user-avatar { width:32px; height:32px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+  .user-info .name { font-size:13px; font-weight:600; }
+  .user-info .role { font-size:11px; color:var(--muted); }
+  .logout-btn { width:100%; margin-top:8px; padding:9px; background:transparent; border:1px solid var(--border);
+    border-radius:8px; color:var(--muted); font-size:12px; cursor:pointer; font-family:inherit; transition:.2s; }
+  .logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+  .main { margin-left:240px; padding:32px; min-height:100vh; }
+  .page { display:none; }
+  .page.active { display:block; }
+  .page-title { font-size:24px; font-weight:700; margin-bottom:6px; }
+  .page-sub { color:var(--muted); font-size:14px; margin-bottom:28px; }
+
+  /* ---- DASHBOARD ---- */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; }
+  .stat-card .label { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .stat-card .value { font-size:28px; font-weight:700; }
+  .stat-card .sub { font-size:12px; color:var(--muted); margin-top:4px; }
+  .stat-card.blue .value { color:var(--accent); }
+  .stat-card.green .value { color:var(--green); }
+  .stat-card.yellow .value { color:var(--yellow); }
+  .stat-card.red .value { color:var(--red); }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px; }
+  .card-title { font-size:15px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .assess-btn-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .assess-btn { padding:18px; background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    cursor:pointer; text-align:left; transition:.2s; }
+  .assess-btn:hover { border-color:var(--accent); background:rgba(59,130,246,0.08); transform:translateY(-2px); }
+  .assess-btn .emoji { font-size:24px; margin-bottom:8px; }
+  .assess-btn .title { font-size:13px; font-weight:600; }
+  .assess-btn .desc { font-size:11px; color:var(--muted); margin-top:3px; }
+
+  .history-item { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .history-item:last-child { border-bottom:none; }
+  .history-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .history-dot.low { background:var(--green); }
+  .history-dot.moderate { background:var(--yellow); }
+  .history-dot.high { background:var(--red); }
+  .history-info .type { font-size:13px; font-weight:500; }
+  .history-info .date { font-size:11px; color:var(--muted); margin-top:2px; }
+  .history-badge { margin-left:auto; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-low { background:rgba(16,185,129,0.15); color:var(--green); }
+  .badge-mod { background:rgba(245,158,11,0.15); color:var(--yellow); }
+  .badge-high { background:rgba(239,68,68,0.15); color:var(--red); }
+
+  /* ---- ASSESSMENT FORM ---- */
+  .form-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:720px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-group select { width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-size:14px; outline:none; font-family:inherit; }
+  .range-wrap { display:flex; align-items:center; gap:10px; }
+  .range-wrap input[type=range] { flex:1; accent-color:var(--accent); }
+  .range-val { font-size:13px; font-weight:600; color:var(--accent); min-width:40px; text-align:right; }
+  .submit-row { margin-top:24px; display:flex; gap:12px; }
+  .btn-outline { flex:1; padding:12px; border:1px solid var(--border); border-radius:10px; background:transparent;
+    color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:.2s; }
+  .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-submit { flex:2; padding:12px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none; border-radius:10px; color:#fff; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:.2s; }
+  .btn-submit:hover { opacity:0.9; }
+
+  /* ---- RESULT ---- */
+  .result-box { margin-top:24px; padding:24px; background:var(--surface2); border:1px solid var(--border); border-radius:16px; }
+  .result-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .risk-score-big { font-size:48px; font-weight:800; }
+  .risk-label { font-size:14px; font-weight:600; padding:6px 16px; border-radius:20px; }
+  .gauge-wrap { margin:16px 0; }
+  .gauge-bar { height:12px; background:var(--border); border-radius:6px; overflow:hidden; }
+  .gauge-fill { height:100%; border-radius:6px; transition:width 1s ease; }
+  .contribs { margin-top:20px; }
+  .contrib-item { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .contrib-label { font-size:12px; color:var(--muted); width:130px; flex-shrink:0; }
+  .contrib-bar-wrap { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .contrib-bar { height:100%; border-radius:4px; }
+  .contrib-val { font-size:12px; font-weight:600; width:50px; text-align:right; }
+  .rec-box { margin-top:20px; padding:16px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:12px; }
+  .rec-box p { font-size:13px; line-height:1.6; color:var(--text); }
+
+  /* ---- HISTORY PAGE ---- */
+  .history-table { width:100%; border-collapse:collapse; }
+  .history-table th { text-align:left; padding:12px 16px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border); }
+  .history-table td { padding:14px 16px; font-size:13px; border-bottom:1px solid var(--border); }
+  .history-table tr:last-child td { border-bottom:none; }
+  .history-table tr:hover td { background:var(--surface2); }
+
+  /* ---- RESPONSIVE ---- */
+  @media(max-width:900px){
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .grid2{grid-template-columns:1fr;}
+    .sidebar{width:200px;}
+    .main{margin-left:200px;}
+  }
+  @media(max-width:640px){
+    .sidebar{display:none;}
+    .main{margin-left:0; padding:20px;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .form-grid{grid-template-columns:1fr;}
+  }
+
+  .spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- ========== AUTH ========== -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">🏥</div>
+      <h1>Aegis Medical</h1>
+      <p>AI-Powered Diagnostic Assistant</p>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- Login -->
+    <div id="loginForm">
+      <div class="form-group"><label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="patient@example.com" value="patient@example.com"/>
+      </div>
+      <div class="form-group"><label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" value="password123"/>
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Sign In to Dashboard</button>
+      <div class="demo-hint">
+        Demo: <strong>patient@example.com</strong> / <strong>password123</strong><br/>
+        or <strong>admin@example.com</strong> / <strong>password123</strong>
+      </div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerForm" class="hidden">
+      <div class="form-group"><label>Full Name</label>
+        <input type="text" id="regName" placeholder="John Doe"/>
+      </div>
+      <div class="form-group"><label>Email Address</label>
+        <input type="email" id="regEmail" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group"><label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min 8 characters"/>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== APP SHELL ========== -->
+<div class="app" id="appShell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">🏥</div>
+      <span>Aegis</span>
+    </div>
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('diabetes')" id="nav-diabetes">
+      <span class="icon">🩸</span> Diabetes Risk
+    </div>
+    <div class="nav-item" onclick="showPage('heart')" id="nav-heart">
+      <span class="icon">❤️</span> Heart Disease
+    </div>
+    <div class="nav-item" onclick="showPage('history')" id="nav-history">
+      <span class="icon">📋</span> History
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">P</div>
+        <div class="user-info">
+          <div class="name" id="userName">Patient</div>
+          <div class="role" id="userRole">patient</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Welcome back, <span id="dashGreet">Patient</span> 👋</div>
+      <div class="page-sub">Here's your health overview at a glance.</div>
+
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="label">Total Assessments</div>
+          <div class="value" id="statTotal">3</div>
+          <div class="sub">All time</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Low Risk</div>
+          <div class="value" id="statLow">1</div>
+          <div class="sub">Assessments</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="label">Moderate Risk</div>
+          <div class="value" id="statMod">1</div>
+          <div class="sub">Assessments</div>
+        </div>
+        <div class="stat-card red">
+          <div class="label">High Risk</div>
+          <div class="value" id="statHigh">1</div>
+          <div class="sub">Assessments</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">🔬 Run New Assessment</div>
+          <div class="assess-btn-grid">
+            <div class="assess-btn" onclick="showPage('diabetes')">
+              <div class="emoji">🩸</div>
+              <div class="title">Diabetes Risk</div>
+              <div class="desc">Glucose, BMI, insulin analysis</div>
+            </div>
+            <div class="assess-btn" onclick="showPage('heart')">
+              <div class="emoji">❤️</div>
+              <div class="title">Heart Disease</div>
+              <div class="desc">Cholesterol, BP, ECG analysis</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📋 Recent Assessments</div>
+          <div id="recentList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIABETES PAGE -->
+    <div class="page" id="page-diabetes">
+      <div class="page-title">🩸 Diabetes Risk Assessment</div>
+      <div class="page-sub">Enter clinical parameters for AI-powered diabetes risk scoring.</div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Age (years)</label>
+            <div class="range-wrap">
+              <input type="range" min="10" max="90" value="35" id="d_age" oninput="document.getElementById('d_age_v').textContent=this.value"/>
+              <span class="range-val" id="d_age_v">35</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Glucose Level (mg/dL)</label>
+            <div class="range-wrap">
+              <input type="range" min="50" max="300" value="120" id="d_glucose" oninput="document.getElementById('d_glucose_v').textContent=this.value"/>
+              <span class="range-val" id="d_glucose_v">120</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>BMI (kg/m²)</label>
+            <div class="range-wrap">
+              <input type="range" min="10" max="60" value="25" step="0.1" id="d_bmi" oninput="document.getElementById('d_bmi_v').textContent=parseFloat(this.value).toFixed(1)"/>
+              <span class="range-val" id="d_bmi_v">25.0</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Blood Pressure (mmHg)</label>
+            <div class="range-wrap">
+              <input type="range" min="40" max="180" value="72" id="d_bp" oninput="document.getElementById('d_bp_v').textContent=this.value"/>
+              <span class="range-val" id="d_bp_v">72</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Insulin Level (µU/mL)</label>
+            <div class="range-wrap">
+              <input type="range" min="0" max="300" value="80" id="d_insulin" oninput="document.getElementById('d_insulin_v').textContent=this.value"/>
+              <span class="range-val" id="d_insulin_v">80</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Pregnancies (0 if male)</label>
+            <div class="range-wrap">
+              <input type="range" min="0" max="15" value="0" id="d_preg" oninput="document.getElementById('d_preg_v').textContent=this.value"/>
+              <span class="range-val" id="d_preg_v">0</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Family History of Diabetes</label>
+            <select id="d_family">
+              <option value="0.1">No family history</option>
+              <option value="0.5">One parent affected</option>
+              <option value="0.9">Both parents affected</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Skin Thickness (mm)</label>
+            <div class="range-wrap">
+              <input type="range" min="0" max="100" value="20" id="d_skin" oninput="document.getElementById('d_skin_v').textContent=this.value"/>
+              <span class="range-val" id="d_skin_v">20</span>
+            </div>
+          </div>
+        </div>
+        <div class="submit-row">
+          <button class="btn-outline" onclick="resetDiabetes()">Reset</button>
+          <button class="btn-submit" id="d_submitBtn" onclick="runDiabetes()">
+            Run AI Risk Analysis →
+          </button>
+        </div>
+        <div class="result-box hidden" id="diabetesResult"></div>
+      </div>
+    </div>
+
+    <!-- HEART PAGE -->
+    <div class="page" id="page-heart">
+      <div class="page-title">❤️ Heart Disease Risk Assessment</div>
+      <div class="page-sub">Enter cardiovascular parameters for AI risk evaluation.</div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Age (years)</label>
+            <div class="range-wrap">
+              <input type="range" min="20" max="90" value="54" id="h_age" oninput="document.getElementById('h_age_v').textContent=this.value"/>
+              <span class="range-val" id="h_age_v">54</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Resting Blood Pressure (mmHg)</label>
+            <div class="range-wrap">
+              <input type="range" min="80" max="220" value="130" id="h_bp" oninput="document.getElementById('h_bp_v').textContent=this.value"/>
+              <span class="range-val" id="h_bp_v">130</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Cholesterol (mg/dL)</label>
+            <div class="range-wrap">
+              <input type="range" min="100" max="600" value="246" id="h_chol" oninput="document.getElementById('h_chol_v').textContent=this.value"/>
+              <span class="range-val" id="h_chol_v">246</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Max Heart Rate (bpm)</label>
+            <div class="range-wrap">
+              <input type="range" min="60" max="220" value="149" id="h_hr" oninput="document.getElementById('h_hr_v').textContent=this.value"/>
+              <span class="range-val" id="h_hr_v">149</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Chest Pain Type</label>
+            <select id="h_cp">
+              <option value="0">Typical Angina</option>
+              <option value="1">Atypical Angina</option>
+              <option value="2">Non-Anginal Pain</option>
+              <option value="3">Asymptomatic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Resting ECG Results</label>
+            <select id="h_ecg">
+              <option value="0">Normal</option>
+              <option value="1">ST-T Wave Abnormality</option>
+              <option value="2">Left Ventricular Hypertrophy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Exercise-Induced Angina</label>
+            <select id="h_angina">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Sex</label>
+            <select id="h_sex">
+              <option value="1">Male</option>
+              <option value="0">Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="submit-row">
+          <button class="btn-outline" onclick="resetHeart()">Reset</button>
+          <button class="btn-submit" id="h_submitBtn" onclick="runHeart()">
+            Run AI Risk Analysis →
+          </button>
+        </div>
+        <div class="result-box hidden" id="heartResult"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div class="page-title">📋 Assessment History</div>
+      <div class="page-sub">All your past diagnostic assessments in one place.</div>
+      <div class="card">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Risk Score</th>
+              <th>Category</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ========== STATE ==========
+let currentUser = null;
+let assessmentHistory = [];
+
+const USERS = [
+  { email:'patient@example.com', password:'password123', name:'John Doe', role:'patient' },
+  { email:'clinician@example.com', password:'password123', name:'Dr. Sarah Connor', role:'clinician' },
+  { email:'admin@example.com', password:'password123', name:'System Admin', role:'admin' },
+];
+
+// ========== AUTH ==========
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const user = USERS.find(u => u.email===email && u.password===pass);
+  if (!user) { alert('Invalid email or password!'); return; }
+  currentUser = user;
+  loadApp();
+}
+
+function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  if (!name||!email||!pass) { alert('Please fill all fields'); return; }
+  if (pass.length < 6) { alert('Password must be at least 6 characters'); return; }
+  const newUser = { email, password:pass, name, role:'patient' };
+  USERS.push(newUser);
+  currentUser = newUser;
+  loadApp();
+}
+
+function doLogout() {
+  currentUser = null;
+  assessmentHistory = [];
+  document.getElementById('authWrap').style.display='flex';
+  document.getElementById('appShell').style.display='none';
+}
+
+function loadApp() {
+  document.getElementById('authWrap').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  document.getElementById('userName').textContent = currentUser.name;
+  document.getElementById('userRole').textContent = currentUser.role;
+  document.getElementById('dashGreet').textContent = currentUser.name.split(' ')[0];
+  document.getElementById('userAvatar').textContent = currentUser.name[0].toUpperCase();
+
+  // Seed history for demo accounts
+  if (currentUser.email === 'patient@example.com') {
+    assessmentHistory = [
+      { type:'Diabetes Risk', score:14.5, category:'Low', date:'3 days ago' },
+      { type:'Heart Disease', score:84.7, category:'High', date:'2 days ago' },
+      { type:'Diabetes Risk', score:42.3, category:'Moderate', date:'Yesterday' },
+    ];
+  }
+  updateStats();
+  renderRecent();
+  renderHistory();
+  showPage('dashboard');
+}
+
+// ========== NAVIGATION ==========
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+}
+
+// ========== STATS ==========
+function updateStats() {
+  const total = assessmentHistory.length;
+  const low = assessmentHistory.filter(a=>a.category==='Low').length;
+  const mod = assessmentHistory.filter(a=>a.category==='Moderate').length;
+  const high = assessmentHistory.filter(a=>a.category==='High').length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statLow').textContent = low;
+  document.getElementById('statMod').textContent = mod;
+  document.getElementById('statHigh').textContent = high;
+}
+
+function renderRecent() {
+  const el = document.getElementById('recentList');
+  if (!assessmentHistory.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px;">No assessments yet. Run one!</p>'; return; }
+  el.innerHTML = assessmentHistory.slice(-4).reverse().map(a => `
+    <div class="history-item">
+      <div class="history-dot ${a.category.toLowerCase()}"></div>
+      <div class="history-info">
+        <div class="type">${a.type}</div>
+        <div class="date">${a.date}</div>
+      </div>
+      <span class="history-badge ${a.category==='Low'?'badge-low':a.category==='High'?'badge-high':'badge-mod'}">${a.category} ${a.score.toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('historyTableBody');
+  if (!assessmentHistory.length) {
+    tbody.innerHTML='<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:30px;">No assessments yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = assessmentHistory.slice().reverse().map(a => `
+    <tr>
+      <td>${a.type}</td>
+      <td><strong>${a.score.toFixed(1)}%</strong></td>
+      <td><span class="history-badge ${a.category==='Low'?'badge-low':a.category==='High'?'badge-high':'badge-mod'}">${a.category}</span></td>
+      <td style="color:var(--muted)">${a.date}</td>
+    </tr>`).join('');
+}
+
+// ========== DIABETES ML MODEL ==========
+function calcDiabetesRisk(p) {
+  // Logistic regression coefficients (trained offline on Pima Indians dataset approximation)
+  let logit = -8.0;
+  logit += 0.038 * p.age;
+  logit += 0.035 * (p.glucose - 80);
+  logit += 0.085 * (p.bmi - 18);
+  logit += 0.008 * p.bp;
+  logit += 0.003 * p.insulin;
+  logit += 0.12 * p.pregnancies;
+  logit += 2.8 * p.family;
+  logit += 0.005 * p.skin;
+  const prob = 1 / (1 + Math.exp(-logit));
+  return Math.min(99, Math.max(1, prob * 100));
+}
+
+function runDiabetes() {
+  const p = {
+    age: +document.getElementById('d_age').value,
+    glucose: +document.getElementById('d_glucose').value,
+    bmi: +document.getElementById('d_bmi').value,
+    bp: +document.getElementById('d_bp').value,
+    insulin: +document.getElementById('d_insulin').value,
+    pregnancies: +document.getElementById('d_preg').value,
+    family: +document.getElementById('d_family').value,
+    skin: +document.getElementById('d_skin').value,
+  };
+
+  const btn = document.getElementById('d_submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const score = calcDiabetesRisk(p);
+    const category = score < 30 ? 'Low' : score < 60 ? 'Moderate' : 'High';
+    const color = category==='Low'?'var(--green)':category==='High'?'var(--red)':'var(--yellow)';
+
+    const contribs = [
+      { label:'Glucose', val: Math.min(100, (p.glucose/300)*100), impact: p.glucose > 140 ? 'increases risk':'normal' },
+      { label:'BMI', val: Math.min(100, (p.bmi/60)*100), impact: p.bmi > 30 ? 'increases risk':'normal' },
+      { label:'Family History', val: p.family*100, impact: p.family > 0.4 ? 'increases risk':'normal' },
+      { label:'Age', val: Math.min(100, (p.age/90)*100), impact: p.age > 45 ? 'increases risk':'normal' },
+      { label:'Blood Pressure', val: Math.min(100, (p.bp/180)*100), impact: p.bp > 90 ? 'slightly elevates':'normal' },
+    ];
+
+    showResult('diabetesResult', score, category, color, contribs,
+      getRecommendation('diabetes', category));
+
+    assessmentHistory.push({ type:'Diabetes Risk', score, category, date:'Just now' });
+    updateStats(); renderRecent(); renderHistory();
+    btn.innerHTML = 'Run AI Risk Analysis →';
+    btn.disabled = false;
+  }, 1200);
+}
+
+// ========== HEART ML MODEL ==========
+function calcHeartRisk(p) {
+  let logit = -5.5;
+  logit += 0.04 * (p.age - 40);
+  logit += 0.015 * (p.bp - 120);
+  logit += 0.009 * (p.chol - 200);
+  logit -= 0.022 * (p.hr - 100);
+  logit += 0.6 * p.cp;
+  logit += 0.4 * p.ecg;
+  logit += 1.2 * p.angina;
+  logit += 0.3 * p.sex;
+  const prob = 1 / (1 + Math.exp(-logit));
+  return Math.min(99, Math.max(1, prob * 100));
+}
+
+function runHeart() {
+  const p = {
+    age: +document.getElementById('h_age').value,
+    bp: +document.getElementById('h_bp').value,
+    chol: +document.getElementById('h_chol').value,
+    hr: +document.getElementById('h_hr').value,
+    cp: +document.getElementById('h_cp').value,
+    ecg: +document.getElementById('h_ecg').value,
+    angina: +document.getElementById('h_angina').value,
+    sex: +document.getElementById('h_sex').value,
+  };
+
+  const btn = document.getElementById('h_submitBtn');
+  btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    const score = calcHeartRisk(p);
+    const category = score < 30 ? 'Low' : score < 60 ? 'Moderate' : 'High';
+    const color = category==='Low'?'var(--green)':category==='High'?'var(--red)':'var(--yellow)';
+
+    const contribs = [
+      { label:'Exercise Angina', val: p.angina*100, impact: p.angina ? 'increases risk':'normal' },
+      { label:'Chest Pain Type', val: (p.cp/3)*100, impact: p.cp > 1 ? 'increases risk':'normal' },
+      { label:'Cholesterol', val: Math.min(100,(p.chol/600)*100), impact: p.chol > 240 ? 'increases risk':'normal' },
+      { label:'Age Factor', val: Math.min(100,(p.age/90)*100), impact: p.age > 55 ? 'increases risk':'normal' },
+      { label:'Max Heart Rate', val: Math.min(100,(p.hr/220)*100), impact: p.hr < 120 ? 'may indicate issue':'normal' },
+    ];
+
+    showResult('heartResult', score, category, color, contribs,
+      getRecommendation('heart', category));
+
+    assessmentHistory.push({ type:'Heart Disease', score, category, date:'Just now' });
+    updateStats(); renderRecent(); renderHistory();
+    btn.innerHTML = 'Run AI Risk Analysis →';
+    btn.disabled = false;
+  }, 1200);
+}
+
+// ========== RESULT RENDERER ==========
+function showResult(elId, score, category, color, contribs, recommendation) {
+  const el = document.getElementById(elId);
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <div class="result-header">
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">RISK SCORE</div>
+        <div class="risk-score-big" style="color:${color}">${score.toFixed(1)}%</div>
+      </div>
+      <span class="risk-label" style="background:${color}22;color:${color}">${category} Risk</span>
+    </div>
+    <div class="gauge-wrap">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+        <span>0%</span><span>50%</span><span>100%</span>
+      </div>
+      <div class="gauge-bar">
+        <div class="gauge-fill" style="width:${score}%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red))"></div>
+      </div>
+    </div>
+    <div class="contribs">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600;">FEATURE CONTRIBUTIONS</div>
+      ${contribs.map(c=>`
+        <div class="contrib-item">
+          <span class="contrib-label">${c.label}</span>
+          <div class="contrib-bar-wrap">
+            <div class="contrib-bar" style="width:${c.val}%;background:${c.impact.includes('increases')?'var(--red)':c.impact.includes('slightly')?'var(--yellow)':'var(--green)'}"></div>
+          </div>
+          <span class="contrib-val" style="color:${c.impact.includes('increases')?'var(--red)':c.impact.includes('slightly')?'var(--yellow)':'var(--green)'}">${c.val.toFixed(0)}%</span>
+        </div>`).join('')}
+    </div>
+    <div class="rec-box">
+      <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:6px;">📋 RECOMMENDATION</div>
+      <p>${recommendation}</p>
+    </div>
+    <div style="margin-top:14px;padding:10px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;">
+      <p style="font-size:11px;color:var(--yellow)">⚠️ <strong>Disclaimer:</strong> This is a preliminary AI risk screening tool only. It does not constitute a medical diagnosis. Always consult a qualified healthcare professional.</p>
+    </div>`;
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function getRecommendation(type, category) {
+  const recs = {
+    diabetes: {
+      Low: 'Your diabetes risk appears low. Maintain a balanced diet rich in fiber, engage in regular physical activity (150 min/week), and schedule annual check-ups to monitor glucose levels.',
+      Moderate: 'Your diabetes risk is moderate. Consider reducing refined carbohydrate intake, increasing physical activity, and consulting your doctor for an HbA1c blood test. Lifestyle modifications can significantly reduce risk.',
+      High: 'Your diabetes risk is elevated. Strongly recommended to schedule an appointment with your healthcare provider immediately for comprehensive blood glucose testing (fasting glucose, HbA1c, oral glucose tolerance test). Early intervention is critical.',
+    },
+    heart: {
+      Low: 'Your cardiovascular risk appears low. Continue maintaining a heart-healthy lifestyle: balanced diet low in saturated fats, regular aerobic exercise, no smoking, and annual blood pressure monitoring.',
+      Moderate: 'Your heart disease risk is moderate. Consider scheduling a comprehensive cardiac evaluation including lipid panel, ECG, and stress test. Lifestyle modifications including dietary changes and regular exercise are strongly advised.',
+      High: 'Your cardiovascular risk is high. Immediate consultation with a cardiologist is strongly recommended. Do not delay seeking medical attention. Comprehensive cardiac workup including echocardiogram, stress test, and coronary calcium scoring may be warranted.',
+    }
+  };
+  return recs[type][category];
+}
+
+function resetDiabetes() {
+  document.getElementById('diabetesResult').classList.add('hidden');
+}
+function resetHeart() {
+  document.getElementById('heartResult').classList.add('hidden');
+}
+</script>
+</body>
+</html>
