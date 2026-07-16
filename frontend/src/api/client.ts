@@ -1,4 +1,6 @@
-const BASE_URL = 'http://127.0.0.1:8000';
+// Production: set VITE_API_URL in Vercel env vars to your Render backend URL
+// e.g. https://aegis-medical-backend.onrender.com
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 export const apiClient = {
   async request(endpoint: string, options: RequestInit = {}) {
